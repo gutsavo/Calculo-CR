@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de CR - UFF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background: #eee;
+        }
+
+        input, select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 5px;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .results {
+            margin-top: 20px;
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ccc;
+        }
+
+        .results p {
+            margin: 5px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Calculadora de CR - UFF</h1>
+
+<table id="tabela">
+    <thead>
+        <tr>
+            <th>Disciplina</th>
+            <th>Carga Horária (h)</th>
+            <th>Nota</th>
+            <th>Nota VS (opcional)</th>
+            <th>Situação</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Linha inicial -->
+        <tr>
+            <td><input type="text"></td>
+            <td><input type="number" min="0"></td>
+            <td><input type="number" min="0" max="10" step="0.1"></td>
+            <td><input type="number" min="0" max="10" step="0.1"></td>
+            <td>
+                <select>
+                    <option value="Aprovado">Aprovado</option>
+                    <option value="Reprovado">Reprovado</option>
+                </select>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<button onclick="adicionarLinha()">Adicionar disciplina</button>
+<button onclick="calcularCR()">Calcular CR</button>
+
+<div class="results">
+    <p>CR: <span id="cr">0.00</span></p>
+    <p>Soma da Carga Horária: <span id="somaCH">0</span></p>
+    <p>Soma (CH × Nota): <span id="somaProduto">0.00</span></p>
+</div>
+
+<script>
+    const tabela = document.getElementById("tabela").querySelector("tbody");
+
+    // Adiciona uma nova linha editável
+    function adicionarLinha() {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td><input type="text"></td>
+            <td><input type="number" min="0"></td>
+            <td><input type="number" min="0" max="10" step="0.1"></td>
+            <td><input type="number" min="0" max="10" step="0.1"></td>
+            <td>
+                <select>
+                    <option value="Aprovado">Aprovado</option>
+                    <option value="Reprovado">Reprovado</option>
+                </select>
+            </td>
+        `;
+
+        tabela.appendChild(tr);
+
+        // Atualiza o CR automaticamente ao editar
+        tr.querySelectorAll("input, select").forEach(el => {
+            el.addEventListener("input", calcularCR);
+        });
+    }
+
+    // Lógica do cálculo do CR da UFF
+    function calcularCR() {
+        let somaCH = 0;
+        let somaProduto = 0;
+
+        // Percorre todas as disciplinas da tabela
+        for (const row of tabela.rows) {
+            const ch = parseFloat(row.cells[1].querySelector("input").value);
+            const nota = parseFloat(row.cells[2].querySelector("input").value);
+            const notaVS = parseFloat(row.cells[3].querySelector("input").value);
+            const situacao = row.cells[4].querySelector("select").value;
+
+            // Ignora linhas inválidas (ex: canceladas, vazias, etc.)
+            if (isNaN(ch) || ch <= 0) continue;
+            if (isNaN(nota)) continue;
+
+            let notaConsiderada;
+
+            /*
+                Regras do cálculo:
+                - Se aprovado e tiver VS, usar a nota da VS
+                - Se reprovado, usar a nota final
+            */
+            if (situacao === "Aprovado" && !isNaN(notaVS)) {
+                notaConsiderada = notaVS;
+            } else {
+                notaConsiderada = nota;
+            }
+
+            somaCH += ch;
+            somaProduto += ch * notaConsiderada;
+        }
+
+        const cr = somaCH > 0 ? somaProduto / somaCH : 0;
+
+        document.getElementById("cr").textContent = cr.toFixed(2);
+        document.getElementById("somaCH").textContent = somaCH.toFixed(0);
+        document.getElementById("somaProduto").textContent = somaProduto.toFixed(2);
+    }
+
+    // Atualiza automaticamente ao editar a primeira linha
+    document.querySelectorAll("input, select").forEach(el => {
+        el.addEventListener("input", calcularCR);
+    });
+</script>
+
+</body>
+</html>
